@@ -1,8 +1,11 @@
 require("dotenv").config();
 
+const bodyParser = require("body-parser")
+
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+
 
 const dbUser = process.env.API_USER;
 const dbHost = process.env.API_HOST;
@@ -20,6 +23,8 @@ const pool = new Pool({
 const app = express();
 
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 app.use(cors());
 
@@ -33,14 +38,21 @@ app.get("/api/favorites", async (req, res) => {
   res.send(rows);
 });
 
-app.post("/api/favorites", async (req, res) => {
+
+app.post('/api/favorites', (req, res) => {
   const { id, user_id } = req.body;
 
-  const { rows } = await pool.query(
-    `INSERT INTO favorites (id, user_id) VALUES (${id}, ${user_id})`
-  );
+  const query = `INSERT INTO favorites (id, user_id) VALUES (${id}, ${user_id})`;
+  const values = [id, user_id];
 
-  res.send(rows);
+  pool.query(query, values, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error al guardar la pelicula en favoritos');
+    } else {
+      res.send('Pelicula guardada correctamente');
+    }
+  });
 });
 
 app.listen(8000, () => {
