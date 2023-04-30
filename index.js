@@ -6,7 +6,6 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 
-
 const dbUser = process.env.API_USER;
 const dbHost = process.env.API_HOST;
 const dbName = process.env.API_DB;
@@ -42,15 +41,37 @@ app.get("/api/favorites", async (req, res) => {
 app.post('/api/favorites', (req, res) => {
   const { id, user_id } = req.body;
 
-  const query = `INSERT INTO favorites (id, user_id) VALUES (${id}, ${user_id})`;
-  const values = [id, user_id];
-
-  pool.query(query, values, (err, result) => {
+  const query = `INSERT INTO favorites (id, user_id) VALUES (${id}, '${user_id}')`;
+  
+  pool.query(query, (err, result) => {
     if (err) {
       console.error(err);
       res.status(500).send('Error al guardar la pelicula en favoritos');
     } else {
       res.send('Pelicula guardada correctamente');
+    }
+  });
+});
+
+
+app.post('/api/users', (req, res) => {
+  const { id } = req.body;
+
+  const query = `INSERT INTO users(id)
+  SELECT '${id}'
+  WHERE
+  NOT EXISTS (
+  SELECT id FROM users WHERE id= '${id}'
+  )`;
+
+  const values = [id];
+
+  pool.query(query, values, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error al guardar el usuario');
+    } else {
+      res.send('Usuario insertado correctamente');
     }
   });
 });
